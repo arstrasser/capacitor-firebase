@@ -4,13 +4,12 @@ import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.google.firebase.remoteconfig.ConfigUpdate;
 import io.capawesome.capacitorjs.plugins.firebase.remoteconfig.interfaces.Result;
-import java.util.Set;
 
-public class AddConfigUpdateListenerOptionsCallbackEvent implements Result {
+public class ConfigUpdateEvent implements Result {
 
     private ConfigUpdate configUpdate;
 
-    public AddConfigUpdateListenerOptionsCallbackEvent(ConfigUpdate configUpdate) {
+    public ConfigUpdateEvent(ConfigUpdate configUpdate) {
         this.configUpdate = configUpdate;
     }
 

@@ -1,3 +1,5 @@
+import { PluginListenerHandle } from '@capacitor/core';
+
 export interface FirebaseRemoteConfigPlugin {
   /**
    * Make the last fetched configuration available to the getters.
@@ -46,25 +48,29 @@ export interface FirebaseRemoteConfigPlugin {
     options: SetMinimumFetchIntervalOptions,
   ): Promise<void>;
   /**
-   * Add a listener for the config update event.
+   * Add a listener to receive realtime config updates.
+   *
+   * You must call `activate()` to make the updated config available to the getters.
    *
    * Only available for Android and iOS.
    *
    * @since 5.4.0
    */
-  addConfigUpdateListener(
-    callback: AddConfigUpdateListenerOptionsCallback,
-  ): Promise<CallbackId>;
+  addListener(
+    eventName: 'configUpdate',
+    listenerFunc: ConfigUpdateEventListener,
+  ): Promise<PluginListenerHandle> & PluginListenerHandle;
   /**
-   * Remove a listener for the config update event.
+   * Add a listener to receive realtime config update errors.
    *
    * Only available for Android and iOS.
    *
    * @since 5.4.0
    */
-  removeConfigUpdateListener(
-    options: RemoveConfigUpdateListenerOptions,
-  ): Promise<void>;
+  addListener(
+    eventName: 'configUpdateError',
+    listenerFunc: ConfigUpdateErrorEventListener,
+  ): Promise<PluginListenerHandle> & PluginListenerHandle;
   /**
    * Remove all listeners for this plugin.
    *
@@ -193,17 +199,16 @@ export interface SetMinimumFetchIntervalOptions {
 }
 
 /**
+ * Callback to receive realtime config updates.
+ *
  * @since 5.4.0
  */
-export type AddConfigUpdateListenerOptionsCallback = (
-  event: AddConfigUpdateListenerOptionsCallbackEvent | null,
-  error: any,
-) => void;
+export type ConfigUpdateEventListener = (event: ConfigUpdateEvent) => void;
 
 /**
  * @since 5.4.0
  */
-export interface AddConfigUpdateListenerOptionsCallbackEvent {
+export interface ConfigUpdateEvent {
   /**
    * Parameter keys whose values have been updated from the currently activated values.
    *
@@ -213,20 +218,24 @@ export interface AddConfigUpdateListenerOptionsCallbackEvent {
 }
 
 /**
+ * Callback to receive realtime config update errors.
+ *
  * @since 5.4.0
  */
-export type CallbackId = string;
+export type ConfigUpdateErrorEventListener = (
+  event: ConfigUpdateErrorEvent,
+) => void;
 
 /**
  * @since 5.4.0
  */
-export interface RemoveConfigUpdateListenerOptions {
+export interface ConfigUpdateErrorEvent {
   /**
-   * The id of the listener to remove.
+   * The error message.
    *
    * @since 5.4.0
    */
-  id: CallbackId;
+  message: string;
 }
 
 /**

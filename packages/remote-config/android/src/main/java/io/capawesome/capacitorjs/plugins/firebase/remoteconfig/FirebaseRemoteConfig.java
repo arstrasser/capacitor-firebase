@@ -3,27 +3,29 @@ package io.capawesome.capacitorjs.plugins.firebase.remoteconfig;
 import static io.capawesome.capacitorjs.plugins.firebase.remoteconfig.FirebaseRemoteConfigPlugin.TAG;
 
 import android.util.Log;
-import androidx.annotation.NonNull;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
+import androidx.annotation.Nullable;
+
 import com.google.firebase.remoteconfig.ConfigUpdate;
 import com.google.firebase.remoteconfig.ConfigUpdateListener;
 import com.google.firebase.remoteconfig.ConfigUpdateListenerRegistration;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigException;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigValue;
-import io.capawesome.capacitorjs.plugins.firebase.remoteconfig.classes.events.AddConfigUpdateListenerOptionsCallbackEvent;
-import io.capawesome.capacitorjs.plugins.firebase.remoteconfig.classes.options.AddConfigUpdateListenerOptions;
-import io.capawesome.capacitorjs.plugins.firebase.remoteconfig.classes.options.RemoveConfigUpdateListenerOptions;
-import io.capawesome.capacitorjs.plugins.firebase.remoteconfig.interfaces.NonEmptyResultCallback;
+
+import io.capawesome.capacitorjs.plugins.firebase.remoteconfig.classes.events.ConfigUpdateErrorEvent;
+import io.capawesome.capacitorjs.plugins.firebase.remoteconfig.classes.events.ConfigUpdateEvent;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class FirebaseRemoteConfig {
 
     private final FirebaseRemoteConfigPlugin plugin;
     private final com.google.firebase.remoteconfig.FirebaseRemoteConfig remoteConfigInstance;
-    private final Map<String, ConfigUpdateListenerRegistration> listenerRegistrationMap = new HashMap<>();
+
+    @Nullable
+    private ConfigUpdateListenerRegistration configUpdateListenerRegistration;
+    private int configUpdateListenerRegistrationCount = 0;
 
     public FirebaseRemoteConfig(FirebaseRemoteConfigPlugin plugin) {
         this.plugin = plugin;
@@ -93,43 +95,46 @@ public class FirebaseRemoteConfig {
         return new GetValueResult<String>(value.asString(), value.getSource());
     }
 
-    public void addConfigUpdateListener(@NonNull AddConfigUpdateListenerOptions options, @NonNull NonEmptyResultCallback callback) {
-        String callbackId = options.getCallbackId();
+    public void addConfigUpdateListener() {
+        this.configUpdateListenerRegistrationCount++;
+        if (this.configUpdateListenerRegistration != null) {
+            return;
+        }
+        this.configUpdateListenerRegistration =
+                this.remoteConfigInstance.addOnConfigUpdateListener(
+                        new ConfigUpdateListener() {
+                            @Override
+                            public void onUpdate(ConfigUpdate configUpdate) {
+                                ConfigUpdateEvent event = new ConfigUpdateEvent(
+                                        configUpdate
+                                );
+                                plugin.notifyConfigUpdateEventListener(event);
+                            }
 
-        ConfigUpdateListenerRegistration listenerRegistration =
-            this.remoteConfigInstance.addOnConfigUpdateListener(
-                    new ConfigUpdateListener() {
-                        @Override
-                        public void onUpdate(ConfigUpdate configUpdate) {
-                            AddConfigUpdateListenerOptionsCallbackEvent event = new AddConfigUpdateListenerOptionsCallbackEvent(
-                                configUpdate
-                            );
-                            callback.success(event);
+                            @Override
+                            public void onError(FirebaseRemoteConfigException error) {
+                                ConfigUpdateErrorEvent event = new ConfigUpdateErrorEvent(
+                                        error
+                                );
+                                plugin.notifyConfigUpdateErrorEventListener(event);
+                            }
                         }
-
-                        @Override
-                        public void onError(FirebaseRemoteConfigException error) {
-                            callback.error(error);
-                        }
-                    }
                 );
-        this.listenerRegistrationMap.put(callbackId, listenerRegistration);
     }
 
-    public void removeConfigUpdateListener(@NonNull RemoveConfigUpdateListenerOptions options) {
-        String callbackId = options.getCallbackId();
-
-        ConfigUpdateListenerRegistration listenerRegistration = this.listenerRegistrationMap.get(callbackId);
-        if (listenerRegistration != null) {
-            listenerRegistration.remove();
+    public void removeConfigUpdateListener() {
+        if (this.configUpdateListenerRegistrationCount > 0) {
+            this.configUpdateListenerRegistrationCount--;
         }
-        this.listenerRegistrationMap.remove(callbackId);
+        if (this.configUpdateListenerRegistrationCount == 0) {
+            this.configUpdateListenerRegistration.remove();
+            this.configUpdateListenerRegistration = null;
+        }
     }
 
     public void removeAllListeners() {
-        for (ConfigUpdateListenerRegistration listenerRegistration : this.listenerRegistrationMap.values()) {
-            listenerRegistration.remove();
-        }
-        this.listenerRegistrationMap.clear();
+        this.configUpdateListenerRegistrationCount = 0;
+        this.configUpdateListenerRegistration.remove();
+        this.configUpdateListenerRegistration = null;
     }
 }
