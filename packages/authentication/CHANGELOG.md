@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.4.0
+
+### Minor Changes
+
+- [`07d038a`](https://github.com/capawesome-team/capacitor-firebase/commit/07d038a12660637ca0884e5271fe434ecdd0971e) ([#522](https://github.com/capawesome-team/capacitor-firebase/pull/522)): feat(android): add `timeout` option to `signInWithPhoneNumber(…)`
+
+### Patch Changes
+
+- [`0e0bc8a`](https://github.com/capawesome-team/capacitor-firebase/commit/0e0bc8af428de0d65c69ce37d13b31eb323f3468) ([#520](https://github.com/capawesome-team/capacitor-firebase/pull/520)): fix(ios): empty verification ID on phone auth
+
+* [`d548176`](https://github.com/capawesome-team/capacitor-firebase/commit/d54817690550394a5a094a40b89e008243aafda8) ([#512](https://github.com/capawesome-team/capacitor-firebase/pull/512)): fix: `null` values were not returned
+
 ## 5.3.0
 
 ### Patch Changes
